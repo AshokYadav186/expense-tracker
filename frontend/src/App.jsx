@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import ExpenseForm from './components/ExpenseForm'
 import ExpenseList from './components/ExpenseList'
+import ExpenseChart from './components/ExpenseChart'
+import AIInsight from './components/AIInsight'
 
 function App() {
   const [expenses, setExpenses] = useState([])
@@ -28,6 +30,8 @@ function App() {
     setExpenses(expenses.filter((e) => e._id !== id))
   }
 
+  const totalAmount = expenses.reduce((sum,e) => sum + e.amount, 0)
+
   useEffect(() => {
     fetchExpenses()
   }, [])
@@ -37,7 +41,18 @@ function App() {
       <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">
         Expense Tracker
       </h1>
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6 flex justify-between items-center">
+      <div>
+        <p className="text-gray-500 text-sm">Total Spent</p>
+        <p className="text-3xl font-bold text-gray-800">₹{totalAmount}</p>
+      </div>
+      <div className="bg-blue-100 p-4 rounded-full">
+        <p className="text-blue-600 text-2xl">💰</p>
+      </div>
+    </div>
       <div className="max-w-xl mx-auto">
+        <ExpenseChart expenses={expenses} />
+        <AIInsight expenses={expenses} />
         <ExpenseForm onAdd={addExpense} />
         <ExpenseList expenses={expenses} onDelete={deleteExpense} />
       </div>

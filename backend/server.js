@@ -4,12 +4,14 @@ const mongoose = require('mongoose');
 
 const app = express();
 const expenseRoutes = require('./routes/expenseRoutes');
+const insightRoutes = require('./routes/insightRoutes');
 const cors = require('cors');
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(cors());
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/insight' , insightRoutes);
 
 app.get('/',(req,res) => {
   res.send('Server is runnig!');
