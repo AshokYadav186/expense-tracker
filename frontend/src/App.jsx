@@ -6,6 +6,10 @@ import AIInsight from './components/AIInsight'
 
 function App() {
   const [expenses, setExpenses] = useState([])
+  const [filter, setFilter] = useState('All')
+  const filteredExpenses = filter === 'All' 
+  ? expenses 
+  : expenses.filter((e) => e.category === filter)
 
   const fetchExpenses = async () => {
     const response = await fetch('http://localhost:5000/api/expenses')
@@ -36,27 +40,55 @@ function App() {
     fetchExpenses()
   }, [])
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">
-        Expense Tracker
+ return (
+  <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-4xl font-bold text-center text-indigo-700 mb-2">
+        💸 Expense Tracker
       </h1>
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6 flex justify-between items-center">
-      <div>
-        <p className="text-gray-500 text-sm">Total Spent</p>
-        <p className="text-3xl font-bold text-gray-800">₹{totalAmount}</p>
+      <p className="text-center text-gray-500 mb-8">Track your spending smartly</p>
+
+      {/* Summary Cards Row */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-2xl shadow p-6">
+          <p className="text-gray-500 text-sm mb-1">Total Spent</p>
+          <p className="text-3xl font-bold text-indigo-600">₹{totalAmount}</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow p-6">
+          <p className="text-gray-500 text-sm mb-1">Total Expenses</p>
+          <p className="text-3xl font-bold text-indigo-600">{expenses.length}</p>
+        </div>
       </div>
-      <div className="bg-blue-100 p-4 rounded-full">
-        <p className="text-blue-600 text-2xl">💰</p>
-      </div>
-    </div>
-      <div className="max-w-xl mx-auto">
+
+      {/* Chart and Form Row */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <ExpenseChart expenses={expenses} />
-        <AIInsight expenses={expenses} />
-        <ExpenseForm onAdd={addExpense} />
-        <ExpenseList expenses={expenses} onDelete={deleteExpense} />
+        <div>
+          <AIInsight expenses={expenses} />
+          <ExpenseForm onAdd={addExpense} />
+        </div>
       </div>
+      {/* Filter Bar */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {['All', 'Food', 'Transport', 'Bills', 'Entertainment', 'Other'].map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setFilter(cat)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+              filter === cat
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-600 hover:bg-indigo-50'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Expense List */}
+      <ExpenseList expenses={filteredExpenses} onDelete={deleteExpense} />
     </div>
+  </div>
   )
 }
 

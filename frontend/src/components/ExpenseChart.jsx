@@ -24,15 +24,15 @@ function ExpenseChart( { expenses}){
         Spending by Category
       </h2>
       <div className='flex justify-center'>
-        <PieChart width={365} height={300}>
+        <PieChart width={400} height={320}>
           <Pie
           data = {data}
-          cx = {175}
+          cx = {200}
           cy = {130}
-          outerRadius={100}
+          outerRadius={80}
           dataKey="value"
-          label = {({name, percent })=> 
-            `${name} ${(percent*100).toFixed(0)}%`
+          label = {({percent })=> 
+            `${(percent*100).toFixed(0)}%`
           }>
             {data.map((entry,index) => (
               <Cell

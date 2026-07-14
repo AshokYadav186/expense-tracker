@@ -1,34 +1,58 @@
 import React from 'react'
- 
-function ExpenseList({ expenses, onDelete }){
-  if( expenses.length == 0){
+
+const categoryColors = {
+  Food: 'bg-orange-100 text-orange-600',
+  Transport: 'bg-blue-100 text-blue-600',
+  Bills: 'bg-red-100 text-red-600',
+  Entertainment: 'bg-purple-100 text-purple-600',
+  Other: 'bg-gray-100 text-gray-600'
+}
+
+function ExpenseList({ expenses, onDelete }) {
+  if (expenses.length === 0) {
     return (
-      <div className='bg-white rounded-lg shodow-md p-6 text-center text-grey-400'>
-        No expenses yet. Add one above!
+      <div className="bg-white rounded-2xl shadow p-10 text-center">
+        <p className="text-5xl mb-4">📭</p>
+        <p className="text-gray-400 text-lg">No expenses yet. Add one above!</p>
       </div>
     )
   }
 
   return (
-    <div className='bg-white rounded-lg shadow-md p-6'>
-      <h2 className='text-xl font-semibold mb-4 text-gray-700'>All Expenses</h2>
-      <ul className='flex flex-col gap-3'>
+    <div className="bg-white rounded-2xl shadow p-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-700">
+        Recent Expenses
+      </h2>
+      <ul className="flex flex-col gap-3">
         {expenses.map((expense) => (
           <li
-          key={expense._id}
-          className='flex jsutify-between items-center border-b pb-3'>
-          <div>
-            <p className='font-semibold text-gray-700'>{expense.title} </p>
-            <p className='text-sm text-gray-400'>{expense.category} </p>
-          </div>
-          <div className='flex items-center gap-4'>
-            <span className='font-bold text-green-600'>Rs{expense.amount}</span>
-            <button
-            onClick={() => onDelete(expense._id)}
-            className='text-red-400 hover:text-red-600 font-semibold transition'>
-              Delete
-            </button>
-          </div>
+            key={expense._id}
+            className="flex justify-between items-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col">
+                <p className="font-semibold text-gray-700">{expense.title}</p>
+                <p className="text-xs text-gray-400">
+                  {new Date(expense.date).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-medium px-3 py-1 rounded-full ${categoryColors[expense.category] || 'bg-gray-100 text-gray-600'}`}>
+                {expense.category}
+              </span>
+              <span className="font-bold text-gray-800">₹{expense.amount}</span>
+              <button
+                onClick={() => onDelete(expense._id)}
+                className="text-red-400 hover:text-red-600 transition font-semibold text-sm"
+              >
+                ✕
+              </button>
+            </div>
           </li>
         ))}
       </ul>
