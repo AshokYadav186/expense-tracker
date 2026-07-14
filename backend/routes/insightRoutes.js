@@ -19,7 +19,7 @@ router.post('/', async (req , res) => {
   Be specific about the numbers. Be friendly and practical;
   `;
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
   const result = await model.generateContent(prompt);
   const text = result.response.text();
 

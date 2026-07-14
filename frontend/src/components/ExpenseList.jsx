@@ -8,7 +8,7 @@ const categoryColors = {
   Other: 'bg-gray-100 text-gray-600'
 }
 
-function ExpenseList({ expenses, onDelete }) {
+function ExpenseList({ expenses, onDelete, onEdit }) {
   if (expenses.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow p-10 text-center">
@@ -46,6 +46,12 @@ function ExpenseList({ expenses, onDelete }) {
                 {expense.category}
               </span>
               <span className="font-bold text-gray-800">₹{expense.amount}</span>
+              <button
+                onClick={() => onEdit(expense)}
+                className='text-indigo-400 hover:text-indigo-600 transition font-semibold text-sm mr-2'
+                >
+                  ✏️
+                </button>
               <button
                 onClick={() => onDelete(expense._id)}
                 className="text-red-400 hover:text-red-600 transition font-semibold text-sm"

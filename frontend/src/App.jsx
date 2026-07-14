@@ -3,10 +3,12 @@ import ExpenseForm from './components/ExpenseForm'
 import ExpenseList from './components/ExpenseList'
 import ExpenseChart from './components/ExpenseChart'
 import AIInsight from './components/AIInsight'
+import BudgetTracker from './components/BudgetTracker'
 
 function App() {
   const [expenses, setExpenses] = useState([])
   const [filter, setFilter] = useState('All')
+  const [editingExpense, setEditingExpense] = useState(null)
   const filteredExpenses = filter === 'All' 
   ? expenses 
   : expenses.filter((e) => e.category === filter)
@@ -34,6 +36,21 @@ function App() {
     setExpenses(expenses.filter((e) => e._id !== id))
   }
 
+  const startEdit = (expense) => {
+  setEditingExpense(expense)
+}
+
+const updateExpense = async (updatedData) => {
+  const response = await fetch(`http://localhost:5000/api/expenses/${editingExpense._id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedData)
+  })
+  const updated = await response.json()
+  setExpenses(expenses.map((e) => e._id === updated._id ? updated : e))
+  setEditingExpense(null)
+}
+
   const totalAmount = expenses.reduce((sum,e) => sum + e.amount, 0)
 
   useEffect(() => {
@@ -59,13 +76,18 @@ function App() {
           <p className="text-3xl font-bold text-indigo-600">{expenses.length}</p>
         </div>
       </div>
+      <BudgetTracker totalAmount={totalAmount} />
 
       {/* Chart and Form Row */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <ExpenseChart expenses={expenses} />
         <div>
           <AIInsight expenses={expenses} />
-          <ExpenseForm onAdd={addExpense} />
+          <ExpenseForm 
+            onAdd={addExpense} 
+            editingExpense={editingExpense}
+            onUpdate={updateExpense}
+          />
         </div>
       </div>
       {/* Filter Bar */}
@@ -86,7 +108,9 @@ function App() {
       </div>
 
       {/* Expense List */}
-      <ExpenseList expenses={filteredExpenses} onDelete={deleteExpense} />
+      <ExpenseList expenses={filteredExpenses} 
+                   onDelete={deleteExpense}
+                   onEdit={startEdit} />
     </div>
   </div>
   )

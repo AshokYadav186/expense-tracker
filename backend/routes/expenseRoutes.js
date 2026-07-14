@@ -35,4 +35,22 @@ router.delete('/:id', async (req , res) => {
   }
 });
 
+router.put('/:id', async (req, res) => {
+  try {
+    const updatedExpense = await Expense.findByIdAndUpdate(
+      req.params.id,
+      {
+        title: req.body.title,
+        amount: req.body.amount,
+        category: req.body.category,
+        date: req.body.date
+      },
+      { new: true }
+    );
+    res.json(updatedExpense);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
