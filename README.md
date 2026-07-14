@@ -18,25 +18,25 @@ A modern full-stack expense tracking application built with the MERN stack that 
 
 ---
 
-## 🛠 Tech Stack
 
-### Frontend
-- React.js
-- CSS3
+![React](https://img.shields.io/badge/React-19-blue)
 
+![Node.js](https://img.shields.io/badge/Node.js-Backend-green)
 
-### Backend
-- Node.js
-- Express.js
+![MongoDB](https://img.shields.io/badge/MongoDB-Database-brightgreen)
 
-### Database
-- MongoDB
+![Express](https://img.shields.io/badge/Express.js-API-lightgrey)
 
-### Charts
-- Recharts
+---
 
-### AI
-- Gemini API
+✔ Add Expenses
+✔ Edit Expenses
+✔ Delete Expenses
+✔ Category Filtering
+✔ Budget Tracking
+✔ Pie Chart Analytics
+✔ AI Spending Insights
+✔ Responsive Dashboard
 
 ---
 
@@ -44,19 +44,19 @@ A modern full-stack expense tracking application built with the MERN stack that 
 
 ### Dashboard Overview
 
-![Dashboard](screenshots/dashboard-overview.png)
+![Dashboard](Screenshots/dashboard-overview.png)
 
 ---
 
 ### Analytics & AI Insights
 
-![Budget](screenshots/analytics-and-ai.png)
+![Budget](Screenshots/analytics-and-ai.png)
 
 ---
 
 ### Expense Management
 
-![Filter](screenshots/expense-management.png)
+![Filter](Screenshots/expense-management.png)
 
 ---
 
