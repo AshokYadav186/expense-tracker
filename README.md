@@ -1,6 +1,6 @@
 # 💸 Expense Tracker
 
-A modern full-stack Expense Tracker built using the MERN Stack that helps users efficiently manage their daily expenses, monitor spending habits, visualize expenses through charts, set monthly budgets, and receive AI-powered financial insights.
+A modern full-stack expense tracking application built with the MERN stack that helps users manage expenses, monitor monthly budgets, visualize spending patterns, and receive AI-powered financial insights.
 
 ---
 
@@ -23,7 +23,7 @@ A modern full-stack Expense Tracker built using the MERN Stack that helps users 
 ### Frontend
 - React.js
 - CSS3
-- Axios
+
 
 ### Backend
 - Node.js
@@ -42,27 +42,21 @@ A modern full-stack Expense Tracker built using the MERN Stack that helps users 
 
 ## 📷 Screenshots
 
-### Dashboard
+### Dashboard Overview
 
-![Dashboard](screenshots/dashboard.png)
-
----
-
-### Monthly Budget Tracker
-
-![Budget](screenshots/budget.png)
+![Dashboard](screenshots/dashboard-overview.png)
 
 ---
 
-### Category Filter
+### Analytics & AI Insights
 
-![Filter](screenshots/filter.png)
+![Budget](screenshots/analytics-and-ai.png)
 
 ---
 
-### AI Spending Insights
+### Expense Management
 
-![AI](screenshots/ai-insight.png)
+![Filter](screenshots/expense-management.png)
 
 ---
 
@@ -79,14 +73,14 @@ Install dependencies
 ### Backend
 
 ```bash
-cd server
+cd backend
 npm install
 ```
 
 ### Frontend
 
 ```bash
-cd client
+cd frontend
 npm install
 ```
 
