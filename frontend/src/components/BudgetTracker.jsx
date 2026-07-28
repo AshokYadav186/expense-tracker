@@ -1,82 +1,59 @@
-import React, { useState } from 'react'
+import React from 'react'
 
-function BudgetTracker({ totalAmount }) {
-  const [budget, setBudget] = useState('')
-  const [savedBudget, setSavedBudget] = useState(null)
-
-  const handleSetBudget = () => {
-    if (!budget) return
-    setSavedBudget(Number(budget))
-  }
-
-  const percentage = savedBudget ? Math.min((totalAmount / savedBudget) * 100, 100) : 0
-  const isExceeded = savedBudget && totalAmount > savedBudget
-  const isWarning = savedBudget && totalAmount >= savedBudget * 0.8 && !isExceeded
+function BudgetTracker({ totalAmount, customBudget = 50000, onEditBudget }) {
+  const budget = customBudget
+  const percentage = Math.min((totalAmount / budget) * 100, 100)
+  const isExceeded = totalAmount > budget
+  const isWarning = totalAmount >= budget * 0.8 && !isExceeded
 
   return (
-    <div className={`rounded-2xl shadow p-6 mb-6 ${isExceeded ? 'bg-red-50' : 'bg-white'}`}>
-      <h2 className="text-xl font-semibold mb-4 text-gray-700">
-        💰 Monthly Budget
-      </h2>
-
-      {!savedBudget ? (
-        <div className="flex gap-3">
-          <input
-            type="number"
-            placeholder="Set your monthly budget"
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-            className="border rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 flex-1"
-          />
-          <button
-            onClick={handleSetBudget}
-            className="bg-indigo-500 text-white rounded-lg px-6 font-semibold hover:bg-indigo-600 transition"
-          >
-            Set
-          </button>
-        </div>
-      ) : (
-        <div>
-          <div className="flex justify-between mb-2">
-            <span className="text-gray-500 text-sm">
-              Spent: <span className="font-bold text-gray-700">₹{totalAmount}</span>
-            </span>
-            <span className="text-gray-500 text-sm">
-              Budget: <span className="font-bold text-gray-700">₹{savedBudget}</span>
-            </span>
+    <div className="space-y-3">
+      <div className="flex flex-wrap justify-between items-center gap-2">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <span>🎯</span>
+          <span>Monthly Budget Usage</span>
+        </h2>
+        <div className="flex items-center gap-3 text-sm text-slate-400">
+          <div>
+            <span className="font-bold text-indigo-400">₹{totalAmount.toLocaleString()}</span> / ₹{budget.toLocaleString()}
           </div>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-4 mb-3">
-            <div
-              className={`h-4 rounded-full transition-all duration-500 ${
-                isExceeded ? 'bg-red-500' : isWarning ? 'bg-yellow-400' : 'bg-green-400'
-              }`}
-              style={{ width: `${percentage}%` }}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">{percentage.toFixed(0)}% used</span>
+          {onEditBudget && (
             <button
-              onClick={() => { setSavedBudget(null); setBudget('') }}
-              className="text-sm text-indigo-400 hover:text-indigo-600"
+              onClick={onEditBudget}
+              className="text-xs bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20 px-2.5 py-1 rounded-lg font-semibold transition"
             >
-              Reset Budget
+              ✏️ Change Target
             </button>
-          </div>
-
-          {isExceeded && (
-            <div className="mt-3 p-3 bg-red-100 rounded-lg text-red-600 font-medium text-sm">
-              ⚠️ You have exceeded your monthly budget by ₹{totalAmount - savedBudget}!
-            </div>
           )}
+        </div>
+      </div>
 
-          {isWarning && (
-            <div className="mt-3 p-3 bg-yellow-100 rounded-lg text-yellow-700 font-medium text-sm">
-              ⚠️ Warning: You've used 80% of your monthly budget!
-            </div>
-          )}
+      {/* Progress Bar Container */}
+      <div className="w-full bg-slate-950 rounded-full h-4 overflow-hidden border border-slate-800 p-0.5">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${
+            isExceeded ? 'bg-rose-500 shadow-lg shadow-rose-500/50' : isWarning ? 'bg-amber-400 shadow-lg shadow-amber-400/50' : 'bg-emerald-400 shadow-lg shadow-emerald-400/50'
+          }`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+
+      <div className="flex justify-between items-center text-xs text-slate-400">
+        <span>{percentage.toFixed(1)}% of budget utilized</span>
+        <span>Remaining: <strong className={budget - totalAmount < 0 ? 'text-rose-400' : 'text-emerald-400'}>₹{(budget - totalAmount).toLocaleString()}</strong></span>
+      </div>
+
+      {isExceeded && (
+        <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-semibold flex items-center gap-2">
+          <span>🚨</span>
+          <span>Alert: You have exceeded your monthly budget by ₹{(totalAmount - budget).toLocaleString()}!</span>
+        </div>
+      )}
+
+      {isWarning && (
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-xs font-semibold flex items-center gap-2">
+          <span>⚠️</span>
+          <span>Warning: You have reached 80% of your monthly budget allocation.</span>
         </div>
       )}
     </div>
