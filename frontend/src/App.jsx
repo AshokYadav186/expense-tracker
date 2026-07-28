@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
+import { API_BASE_URL } from './config'
 import { AuthContext } from './context/AuthContext'
 import AuthModal from './components/AuthModal'
 import ExpenseForm from './components/ExpenseForm'
@@ -25,7 +26,7 @@ function App() {
   const fetchExpenses = async () => {
     if (!token) return
     try {
-      let url = 'http://localhost:5000/api/expenses?'
+      let url = `${API_BASE_URL}/api/expenses?`
       if (startDate) url += `startDate=${startDate}&`
       if (endDate) url += `endDate=${endDate}&`
 
@@ -46,7 +47,7 @@ function App() {
   const fetchAnalyticsSummary = async () => {
     if (!token) return
     try {
-      const response = await fetch('http://localhost:5000/api/analytics/summary', {
+      const response = await fetch(`${API_BASE_URL}/api/analytics/summary`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (response.ok) {
@@ -60,7 +61,7 @@ function App() {
 
   const addExpense = async (expense) => {
     try {
-      const response = await fetch('http://localhost:5000/api/expenses', {
+      const response = await fetch(`${API_BASE_URL}/api/expenses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,7 +81,7 @@ function App() {
 
   const deleteExpense = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/expenses/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/expenses/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -99,7 +100,7 @@ function App() {
 
   const updateExpense = async (updatedData) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/expenses/${editingExpense._id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/expenses/${editingExpense._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

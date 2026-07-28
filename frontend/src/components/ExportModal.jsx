@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 
 function ExportModal({ token, isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
@@ -8,7 +9,7 @@ function ExportModal({ token, isOpen, onClose }) {
   const handleDownloadCSV = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/analytics/export/csv', {
+      const response = await fetch(`${API_BASE_URL}/api/analytics/export/csv`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
