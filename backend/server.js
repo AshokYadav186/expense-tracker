@@ -15,7 +15,9 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: ['https://expense-tracker-seven-pi-44.vercel.app', 'http://localhost:5173']
+}));
 
 // Routes
 app.use('/api/auth', authRoutes);
