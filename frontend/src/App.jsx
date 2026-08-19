@@ -210,7 +210,7 @@ function App() {
             }`}
           >
             <span>📈</span>
-            <span>MongoDB Analytics</span>
+            <span>PostgreSQL Analytics</span>
           </button>
 
           <button
@@ -376,7 +376,7 @@ function App() {
           </div>
         )}
 
-        {/* --- TAB 2: MONGODB ANALYTICS --- */}
+        {/* --- TAB 2: POSTGRESQL ANALYTICS --- */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
 

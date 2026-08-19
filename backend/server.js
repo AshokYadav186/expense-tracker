@@ -2,8 +2,8 @@ if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const prisma = require('./config/db');
 
 const authRoutes = require('./routes/authRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
@@ -26,20 +26,17 @@ app.use('/api/insight', insightRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ message: '💸 Smart Expense Tracker API is running smoothly!' });
+  res.json({ message: '💸 Smart Expense Tracker API is running smoothly with PostgreSQL!' });
 });
 
-// Database connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/expense-tracker';
-
-mongoose
-  .connect(MONGO_URI)
+// Database connection & server initialization
+prisma.$connect()
   .then(() => {
-    console.log('✅ Connected to MongoDB successfully!');
+    console.log('✅ Connected to PostgreSQL successfully via Prisma!');
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('❌ MongoDB Connection failed:', err.message);
+    console.error('❌ PostgreSQL Connection failed:', err.message);
   });

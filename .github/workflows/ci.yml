@@ -19,10 +19,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Backend Dependencies
+      - name: Install Backend Dependencies & Generate Prisma Client
         run: |
           cd backend
           npm install
+          npx prisma generate
 
       - name: Validate Backend Server Syntax
         run: |

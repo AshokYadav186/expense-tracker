@@ -1,90 +1,98 @@
 const express = require('express');
 const router = express.Router();
 const { Parser } = require('json2csv');
-const Expense = require('../models/Expense');
+const prisma = require('../config/db');
 const { protect } = require('../middleware/authMiddleware');
 
 router.use(protect);
 
 // @route   GET /api/analytics/summary
-// @desc    Advanced MongoDB Aggregation Analytics (Monthly trends & Category breakdown)
+// @desc    Advanced PostgreSQL Aggregation Analytics (Monthly trends & Category breakdown)
 // @access  Private
 router.get('/summary', async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     // 1. Total Expense & Total Income
-    const totals = await Expense.aggregate([
-      { $match: { userId } },
-      { $group: { _id: '$type', total: { $sum: '$amount' } } }
-    ]);
+    const totals = await prisma.expense.groupBy({
+      by: ['type'],
+      where: { userId },
+      _sum: { amount: true }
+    });
 
     let totalExpense = 0;
     let totalIncome = 0;
     totals.forEach((t) => {
-      if (t._id === 'income') totalIncome = t.total;
-      if (t._id === 'expense') totalExpense = t.total;
+      if (t.type === 'income') totalIncome = t._sum.amount || 0;
+      if (t.type === 'expense') totalExpense = t._sum.amount || 0;
     });
 
     // 2. Category Breakdown Pipeline (Expenses only)
-    const categoryStats = await Expense.aggregate([
-      { $match: { userId, type: 'expense' } },
-      {
-        $group: {
-          _id: '$category',
-          totalAmount: { $sum: '$amount' },
-          count: { $sum: 1 },
-          avgAmount: { $avg: '$amount' }
+    const categoryStats = await prisma.expense.groupBy({
+      by: ['category'],
+      where: { userId, type: 'expense' },
+      _sum: { amount: true },
+      _count: { _all: true },
+      _avg: { amount: true },
+      orderBy: {
+        _sum: {
+          amount: 'desc'
         }
-      },
-      { $sort: { totalAmount: -1 } }
-    ]);
+      }
+    });
 
     // Format category stats with percentage
-    const categoryBreakdown = categoryStats.map((item) => ({
-      category: item._id,
-      totalAmount: item.totalAmount,
-      count: item.count,
-      avgAmount: Math.round(item.avgAmount),
-      percentage: totalExpense > 0 ? Number(((item.totalAmount / totalExpense) * 100).toFixed(1)) : 0
-    }));
+    const categoryBreakdown = categoryStats.map((item) => {
+      const sum = item._sum.amount || 0;
+      const count = item._count._all || 0;
+      const avg = item._avg.amount || 0;
+      return {
+        category: item.category,
+        totalAmount: sum,
+        count: count,
+        avgAmount: Math.round(avg),
+        percentage: totalExpense > 0 ? Number(((sum / totalExpense) * 100).toFixed(1)) : 0
+      };
+    });
 
-    // 3. Monthly Spending & Income Trend Pipeline
-    const monthlyTrends = await Expense.aggregate([
-      { $match: { userId } },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$date' },
-            month: { $month: '$date' },
-            type: '$type'
-          },
-          total: { $sum: '$amount' }
-        }
-      },
-      { $sort: { '_id.year': 1, '_id.month': 1 } }
-    ]);
+    // 3. Monthly Spending & Income Trend Pipeline using PostgreSQL EXTRACT
+    const monthlyTrends = await prisma.$queryRaw`
+      SELECT 
+        EXTRACT(YEAR FROM "date")::int AS year,
+        EXTRACT(MONTH FROM "date")::int AS month,
+        "type",
+        SUM("amount")::float AS total
+      FROM "expenses"
+      WHERE "userId" = ${userId}
+      GROUP BY year, month, "type"
+      ORDER BY year ASC, month ASC
+    `;
 
     // Process monthly trends into structured timeline
     const monthsMap = {};
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     monthlyTrends.forEach((item) => {
-      const key = `${monthNames[item._id.month - 1]} ${item._id.year}`;
+      const monthIndex = Number(item.month) - 1;
+      const year = item.year;
+      const key = `${monthNames[monthIndex]} ${year}`;
       if (!monthsMap[key]) {
         monthsMap[key] = { label: key, expense: 0, income: 0 };
       }
-      if (item._id.type === 'income') {
-        monthsMap[key].income = item.total;
+      if (item.type === 'income') {
+        monthsMap[key].income = Number(item.total);
       } else {
-        monthsMap[key].expense = item.total;
+        monthsMap[key].expense = Number(item.total);
       }
     });
 
     const monthlyTimeline = Object.values(monthsMap);
 
     // 4. Highest Single Expense
-    const highestExpense = await Expense.findOne({ userId, type: 'expense' }).sort({ amount: -1 });
+    const highestExpense = await prisma.expense.findFirst({
+      where: { userId, type: 'expense' },
+      orderBy: { amount: 'desc' }
+    });
 
     res.json({
       totalExpense,
@@ -105,10 +113,13 @@ router.get('/summary', async (req, res) => {
 // @access  Private
 router.get('/export/csv', async (req, res) => {
   try {
-    const expenses = await Expense.find({ userId: req.user._id }).sort({ date: -1 });
+    const expenses = await prisma.expense.findMany({
+      where: { userId: req.user.id },
+      orderBy: { date: 'desc' }
+    });
 
     const fields = [
-      { label: 'Transaction ID', value: '_id' },
+      { label: 'Transaction ID', value: 'id' },
       { label: 'Title', value: 'title' },
       { label: 'Type', value: (row) => row.type || 'expense' },
       { label: 'Category', value: 'category' },

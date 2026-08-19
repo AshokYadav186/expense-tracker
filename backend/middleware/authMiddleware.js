@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const prisma = require('../config/db');
 
 const protect = async (req, res, next) => {
   let token;
@@ -16,11 +16,26 @@ const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_for_dev');
 
       // Get user from database excluding password field
-      req.user = await User.findById(decoded.id).select('-password');
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          monthlyBudget: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
 
-      if (!req.user) {
+      if (!user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
+
+      req.user = {
+        ...user,
+        _id: user.id // Ensure backward compatibility for frontend
+      };
 
       next();
     } catch (error) {

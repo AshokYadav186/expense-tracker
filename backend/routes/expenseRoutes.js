@@ -1,10 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const Expense = require('../models/Expense');
+const prisma = require('../config/db');
 const { protect } = require('../middleware/authMiddleware');
 
 // Protect all expense endpoints
 router.use(protect);
+
+// Helper to add _id alias for frontend compatibility
+const formatExpense = (expense) => {
+  if (!expense) return null;
+  return {
+    ...expense,
+    _id: expense.id
+  };
+};
 
 // @route   GET /api/expenses
 // @desc    Get expenses with filtering, date range & search
@@ -13,28 +22,32 @@ router.get('/', async (req, res) => {
   try {
     const { category, search, startDate, endDate, type } = req.query;
 
-    const query = { userId: req.user._id };
+    const where = { userId: req.user.id };
 
     if (category && category !== 'All') {
-      query.category = category;
+      where.category = category;
     }
 
     if (type && type !== 'All') {
-      query.type = type;
+      where.type = type;
     }
 
     if (search) {
-      query.title = { $regex: search, $options: 'i' };
+      where.title = { contains: search, mode: 'insensitive' };
     }
 
     if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate);
-      if (endDate) query.date.$lte = new Date(endDate);
+      where.date = {};
+      if (startDate) where.date.gte = new Date(startDate);
+      if (endDate) where.date.lte = new Date(endDate);
     }
 
-    const expenses = await Expense.find(query).sort({ date: -1 });
-    res.json(expenses);
+    const expenses = await prisma.expense.findMany({
+      where,
+      orderBy: { date: 'desc' }
+    });
+
+    res.json(expenses.map(formatExpense));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -51,18 +64,19 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Title, amount, and category are required' });
     }
 
-    const expense = new Expense({
-      userId: req.user._id,
-      title,
-      amount,
-      category,
-      type: type || 'expense',
-      date: date || Date.now(),
-      notes: notes || ''
+    const expense = await prisma.expense.create({
+      data: {
+        userId: req.user.id,
+        title: title.trim(),
+        amount: Number(amount),
+        category: category.trim(),
+        type: type || 'expense',
+        date: date ? new Date(date) : new Date(),
+        notes: notes ? notes.trim() : ''
+      }
     });
 
-    const newExpense = await expense.save();
-    res.status(201).json(newExpense);
+    res.status(201).json(formatExpense(expense));
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -73,22 +87,30 @@ router.post('/', async (req, res) => {
 // @access  Private
 router.put('/:id', async (req, res) => {
   try {
-    const expense = await Expense.findOne({ _id: req.params.id, userId: req.user._id });
+    const existingExpense = await prisma.expense.findFirst({
+      where: { id: req.params.id, userId: req.user.id }
+    });
 
-    if (!expense) {
+    if (!existingExpense) {
       return res.status(404).json({ message: 'Expense not found or unauthorized' });
     }
 
     const { title, amount, category, date, type, notes } = req.body;
-    if (title !== undefined) expense.title = title;
-    if (amount !== undefined) expense.amount = amount;
-    if (category !== undefined) expense.category = category;
-    if (date !== undefined) expense.date = date;
-    if (type !== undefined) expense.type = type;
-    if (notes !== undefined) expense.notes = notes;
 
-    const updatedExpense = await expense.save();
-    res.json(updatedExpense);
+    const data = {};
+    if (title !== undefined) data.title = title.trim();
+    if (amount !== undefined) data.amount = Number(amount);
+    if (category !== undefined) data.category = category.trim();
+    if (date !== undefined) data.date = new Date(date);
+    if (type !== undefined) data.type = type;
+    if (notes !== undefined) data.notes = notes.trim();
+
+    const updatedExpense = await prisma.expense.update({
+      where: { id: req.params.id },
+      data
+    });
+
+    res.json(formatExpense(updatedExpense));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -99,11 +121,17 @@ router.put('/:id', async (req, res) => {
 // @access  Private
 router.delete('/:id', async (req, res) => {
   try {
-    const expense = await Expense.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    const existingExpense = await prisma.expense.findFirst({
+      where: { id: req.params.id, userId: req.user.id }
+    });
 
-    if (!expense) {
+    if (!existingExpense) {
       return res.status(404).json({ message: 'Expense not found or unauthorized' });
     }
+
+    await prisma.expense.delete({
+      where: { id: req.params.id }
+    });
 
     res.json({ message: 'Expense deleted successfully' });
   } catch (err) {
@@ -112,31 +140,44 @@ router.delete('/:id', async (req, res) => {
 });
 
 // @route   GET /api/expenses/stats/summary
-// @desc    MongoDB Aggregation pipeline for category breakdown & totals
+// @desc    PostgreSQL Aggregations for category breakdown & totals
 // @access  Private
 router.get('/stats/summary', async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     // Aggregation for Category Breakdown (expenses only)
-    const categoryStats = await Expense.aggregate([
-      { $match: { userId, type: 'expense' } },
-      { $group: { _id: '$category', total: { $sum: '$amount' }, count: { $sum: 1 } } },
-      { $sort: { total: -1 } }
-    ]);
+    const categoryGroup = await prisma.expense.groupBy({
+      by: ['category'],
+      where: { userId, type: 'expense' },
+      _sum: { amount: true },
+      _count: { _all: true },
+      orderBy: {
+        _sum: {
+          amount: 'desc'
+        }
+      }
+    });
+
+    const categoryStats = categoryGroup.map((item) => ({
+      _id: item.category,
+      total: item._sum.amount || 0,
+      count: item._count._all
+    }));
 
     // Aggregation for Total Income vs Total Expense
-    const typeTotals = await Expense.aggregate([
-      { $match: { userId } },
-      { $group: { _id: '$type', total: { $sum: '$amount' } } }
-    ]);
+    const typeGroup = await prisma.expense.groupBy({
+      by: ['type'],
+      where: { userId },
+      _sum: { amount: true }
+    });
 
     let totalIncome = 0;
     let totalExpense = 0;
 
-    typeTotals.forEach((item) => {
-      if (item._id === 'income') totalIncome = item.total;
-      if (item._id === 'expense') totalExpense = item.total;
+    typeGroup.forEach((item) => {
+      if (item.type === 'income') totalIncome = item._sum.amount || 0;
+      if (item.type === 'expense') totalExpense = item._sum.amount || 0;
     });
 
     res.json({
